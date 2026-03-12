@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app     = express();
 const server  = http.createServer(app);
 
-app.use(cors());
+app.use(cors({ origin: "*" }));
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
@@ -31,7 +31,7 @@ app.get("/api/results", async (req, res) => {
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
