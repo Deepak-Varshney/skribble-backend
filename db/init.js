@@ -6,6 +6,30 @@ export async function initDatabase() {
     return;
   }
 
+  // Track every room that is created, its settings and lifecycle phase.
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS rooms (
+      id          VARCHAR(12) PRIMARY KEY,
+      host_name   VARCHAR(64),
+      phase       VARCHAR(20) NOT NULL DEFAULT 'lobby',
+      settings    JSONB,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      ended_at    TIMESTAMPTZ
+    )
+  `);
+
+  // Track every player session inside a room.
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS room_players (
+      room_id     VARCHAR(12) NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+      socket_id   VARCHAR(128) NOT NULL,
+      player_name VARCHAR(64) NOT NULL,
+      joined_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      left_at     TIMESTAMPTZ,
+      PRIMARY KEY (room_id, socket_id)
+    )
+  `);
+
   await dbQuery(`
     CREATE TABLE IF NOT EXISTS game_results (
       id SERIAL PRIMARY KEY,

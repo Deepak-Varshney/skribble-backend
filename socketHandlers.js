@@ -1,7 +1,7 @@
-import { GameService } from "./services/GameService.js";
+import { createGameService } from "./services/GameService.js";
 
 export function registerSocketHandlers(io) {
-  const game = new GameService(io);
+  const game = createGameService(io);
 
   io.on("connection", (socket) => {
     socket.on("create_room",  (d) => game.createRoom(socket, d ?? {}));
