@@ -2,13 +2,13 @@ import { dbQuery, hasDatabase } from "./client.js";
 
 // ─── Room lifecycle ────────────────────────────────────────────────────────────
 
-export async function insertRoom(roomId, hostName, settings) {
+export async function insertRoom(roomId, hostName, settings, isPrivate, expiresAt) {
   if (!hasDatabase()) return;
   await dbQuery(
-    `INSERT INTO rooms (id, host_name, settings)
-     VALUES ($1, $2, $3)
+    `INSERT INTO rooms (id, host_name, settings, is_private, expires_at)
+     VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (id) DO NOTHING`,
-    [roomId, hostName, JSON.stringify(settings)]
+    [roomId, hostName, JSON.stringify(settings), Boolean(isPrivate), new Date(expiresAt)]
   );
 }
 
@@ -23,6 +23,49 @@ export async function closeRoom(roomId) {
     `UPDATE rooms SET phase = 'ended', ended_at = NOW() WHERE id = $1`,
     [roomId]
   );
+}
+
+export async function getPublicRooms(limit = 20) {
+  if (!hasDatabase()) return [];
+
+  const safeLimit = Math.max(1, Math.min(100, Number(limit) || 20));
+  const { rows } = await dbQuery(
+    `SELECT id, host_name, settings, created_at, expires_at
+     FROM rooms
+     WHERE ended_at IS NULL
+       AND is_private = FALSE
+       AND expires_at > NOW()
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [safeLimit]
+  );
+
+  return rows;
+}
+
+export async function cleanupExpiredRooms() {
+  if (!hasDatabase()) return 0;
+
+  const { rowCount } = await dbQuery(
+    `UPDATE rooms
+     SET phase = 'expired', ended_at = NOW()
+     WHERE ended_at IS NULL
+       AND expires_at <= NOW()`
+  );
+
+  return rowCount || 0;
+}
+
+export async function closeOpenRoomsOnBoot() {
+  if (!hasDatabase()) return 0;
+
+  const { rowCount } = await dbQuery(
+    `UPDATE rooms
+     SET phase = 'ended', ended_at = NOW()
+     WHERE ended_at IS NULL`
+  );
+
+  return rowCount || 0;
 }
 
 // ─── Player sessions ──────────────────────────────────────────────────────────

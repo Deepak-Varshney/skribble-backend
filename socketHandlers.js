@@ -8,6 +8,8 @@ export function registerSocketHandlers(io) {
     socket.on("join_room",    (d) => game.joinRoom(socket, d ?? {}));
     socket.on("toggle_ready", ({ roomId }) => game.toggleReady(socket, roomId));
     socket.on("start_game",   ({ roomId }) => game.startGame(socket, roomId));
+    socket.on("delete_room",  ({ roomId }) => game.deleteRoom(socket, roomId));
+    socket.on("leave_room",   ({ roomId }) => game.leaveRoom(socket, roomId));
     socket.on("word_chosen",  ({ roomId, word }) => game.chooseWord(socket, roomId, word));
     socket.on("draw_data",    ({ roomId, stroke }) => game.handleStroke(socket, roomId, stroke));
     socket.on("draw_undo",    ({ roomId }) => game.undoStroke(socket, roomId));

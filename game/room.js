@@ -2,10 +2,16 @@ import { clamp } from "../utils/helpers.js";
 import { createPlayer } from "./player.js";
 
 export function createRoom({ id, hostId, hostName, settings = {} }) {
+  const isPrivate = Boolean(settings.private);
+  const createdAt = Date.now();
+  const ttlMs = isPrivate ? 30 * 60 * 1000 : 60 * 60 * 1000;
+
   const room = {
     id,
     hostId,
-    isPrivate: Boolean(settings.private),
+    isPrivate,
+    createdAt,
+    expiresAt: createdAt + ttlMs,
 
     settings: {
       maxPlayers: clamp(settings.maxPlayers, 2, 20, 8),
@@ -101,6 +107,7 @@ export function roomSnapshot(room) {
     round: roundNumber(room),
     turn: turnNumber(room),
     totalTurns: room.totalTurns,
+    expiresAt: room.expiresAt,
     maskedWord: maskedWord(room),
     strokes: room.strokes,
   };

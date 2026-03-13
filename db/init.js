@@ -18,6 +18,11 @@ export async function initDatabase() {
     )
   `);
 
+  await dbQuery(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT TRUE`);
+  await dbQuery(`ALTER TABLE rooms ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ`);
+  await dbQuery(`UPDATE rooms SET expires_at = created_at + INTERVAL '1 hour' WHERE expires_at IS NULL`);
+  await dbQuery(`CREATE INDEX IF NOT EXISTS idx_rooms_visibility_expiry ON rooms (is_private, expires_at, ended_at)`);
+
   // Track every player session inside a room.
   await dbQuery(`
     CREATE TABLE IF NOT EXISTS room_players (
