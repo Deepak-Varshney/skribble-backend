@@ -8,7 +8,7 @@ import {
   resetRound,
   roomSnapshot,
 } from "../../game/room.js";
-import { clamp, normalize, pickRandom, levenshtein } from "../../utils/helpers.js";
+import { clamp, normalize, pickRandom } from "../../utils/helpers.js";
 import { saveGameResult, closeRoom, updateRoomPhase } from "../../db/repository.js";
 
 export function createGameRoundHandlers({ io, rooms, words }) {
@@ -79,12 +79,6 @@ export function createGameRoundHandlers({ io, rooms, words }) {
 
       broadcastState(room);
       checkAllGuessed(room);
-      return;
-    }
-
-    const dist = levenshtein(normalize(guess), normalize(room.word));
-    if (dist <= 2 && dist > 0) {
-      socket.emit("chat_message", { system: true, text: "That's close!" });
       return;
     }
 
